@@ -27,8 +27,3 @@ function afficherProduits() {
 }
 
 afficherProduits();
-
-var str = "https://waytolearnx.com/t.html?name=alex-babtise&age=25&address=paris";
-var url = new URL(str);
-var pUrl = url.searchParams.get("pUrl");
-console.log("pUrl = ", pUrl);
