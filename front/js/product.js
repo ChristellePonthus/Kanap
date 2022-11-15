@@ -1,12 +1,11 @@
 //récupération id
 const queryUrlId = window.location.search;
-console.log('id = ', queryUrlId);
 
 //extraction id
 const urlSearchParams = new URLSearchParams(queryUrlId);
 
 const id = urlSearchParams.get("id");
-console.log('id = ', id);
+console.log('id =', id);
 
 //affichage du produit
 
@@ -46,17 +45,17 @@ btn_send.addEventListener("click", (event) =>{
     const quantityChoice = document.querySelector("#quantity").value;
     let productData = {
         _id: id,
+        localStorageId : id + colorChoice,
         quantity: quantityChoice,
         color: colorChoice
     }
     console.log(productData);
 
-    //Local storage
+    if (quantityChoice != 0 && colorChoice != '') {
+        //Local storage
     let recProduct = JSON.parse(localStorage.getItem("produit"));
-    console.log(recProduct);
 
     //Popup
-
     const popupConfirmation = () => {
         if (window.confirm(`${id} option: ${colorChoice} a bien été ajouté au panier.
         Consulter le panier OK ou continuer les achats ANNULER`)) {
@@ -68,6 +67,9 @@ btn_send.addEventListener("click", (event) =>{
 
     //fonction ajouter produits
     const ajoutPdt = () => {
+        if ("id et couleur exist") {
+            
+        }
         recProduct.push(productData);
         localStorage.setItem("produit", JSON.stringify(recProduct));
     };
@@ -80,5 +82,12 @@ btn_send.addEventListener("click", (event) =>{
         recProduct = [];
         ajoutPdt();
         popupConfirmation();
+    }
+    } else if (quantityChoice == 0 && colorChoice == '') {
+        alert("Veuillez choisir une quantité et une couleur");
+    } else if (quantityChoice == 0) {
+        alert("Veuillez choisir une quantité");
+    } else if (colorChoice == '') {
+        alert("Veuillez choisir une couleur");
     }
 });
