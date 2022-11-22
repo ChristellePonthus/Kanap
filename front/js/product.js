@@ -7,7 +7,7 @@ const urlSearchParams = new URLSearchParams(queryUrlId);
 const id = urlSearchParams.get("id");
 console.log('id =', id);
 
-//affichage du produit
+//Affichage du produit
 
 function afficherProduit() {
     fetch("http://localhost:3000/api/products/" + id)
@@ -17,18 +17,35 @@ function afficherProduit() {
             }
         })
         .then(function(Product) {
-            document.getElementsByClassName('item__img')[0]
-                .innerHTML = '<img src="' + Product.imageUrl + '" alt="' + Product.altTxt + '">';
-            document.getElementById("title")
-                .innerHTML = Product.name;
-            document.getElementById("price")
-                .innerHTML = Product.price;
-            document.getElementById("description")
-                .innerHTML = Product.description;
+
+            //Photo du produit
+            let divProductImg = document.getElementsByClassName("item__img");
+            let productImg = document.createElement("img");
+            productImg.src = Product.imageUrl;
+            productImg.alt = Product.altTxt;
+            document.querySelector("section.item > article > div.item__img").appendChild(productImg);
+
+            //Nom du produit
+            let productName = document.getElementById("title");
+            productName.textContent = Product.name;
+
+            //Prix du produit
+            let productPrice = document.getElementById("price");
+            productPrice.textContent = Product.price + " €";
+
+            //Description du produit
+            let productDesc = document.getElementById("description");
+            productDesc.textContent = Product.description;
+
+            //Couleurs du produit
+            let colorChoice = document.getElementById("colors");
             for (const color of Product.colors) {
-                document.getElementById("colors")
-                    .innerHTML += '<option value="' + color + '">' + color + '</option>'
+                let optionValue = document.createElement("option");
+                optionValue.value = color;
+                optionValue.text = color;
+                colorChoice.options.add(optionValue);
             }
+            
         })
 }
 
@@ -65,22 +82,34 @@ btn_send.addEventListener("click", (event) =>{
         }
     }
 
+    let localStorageId = id + colorChoice;
     //fonction ajouter produits
-    const ajoutPdt = () => {
-        if ("id et couleur exist") {
-            
+    const ajoutPdt = (localStorageId, quantityChoice) => {
+        let quantityCheck = false;
+        for (let i = 0; i < recProduct.length; i++) {
+            if (localStorageId == recProduct[i].localStorageId) {
+                console.log("recProduct[i]", recProduct[i]);
+                console.log("if ?");
+                let quantity = parseInt(recProduct[i].quantity);
+                quantity += parseInt(quantityChoice);
+                recProduct[i].quantity = quantity;
+                console.log("quantity", quantity);
+                quantityCheck = true;
+            }
         }
-        recProduct.push(productData);
+        if (!quantityCheck) {
+            recProduct.push(productData);
+        }
         localStorage.setItem("produit", JSON.stringify(recProduct));
     };
 
     //s'il y a déjà des produits
     if (recProduct) {
-        ajoutPdt();
+        ajoutPdt(localStorageId, quantityChoice);
         popupConfirmation();
     } else {
         recProduct = [];
-        ajoutPdt();
+        ajoutPdt(localStorageId, quantityChoice);
         popupConfirmation();
     }
     } else if (quantityChoice == 0 && colorChoice == '') {
