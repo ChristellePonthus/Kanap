@@ -1,3 +1,5 @@
+//------------------------------- AFFICHAGE DES PRODUITS DE LA BOUTIQUE -----------------------------------
+
 function afficherProduits() {
     fetch("http://localhost:3000/api/products")
         .then(function(response) {
@@ -7,6 +9,7 @@ function afficherProduits() {
             }
         })
         .then(function(Product) {
+            //Récupération de la section où seront affichés les produits
             let itemSection = document.getElementById("items");
             for (const product of Product) {
 
@@ -33,7 +36,6 @@ function afficherProduits() {
                 productArticle.appendChild(productName);
                 productArticle.appendChild(productDesc);
                 productArticle.appendChild(productPrice);
-                console.log("productArticle", productArticle);
 
                 //Balise 'a href' pour le lien vers la fiche produit
                 let productLink = document.createElement("a");

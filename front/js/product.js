@@ -1,25 +1,24 @@
-//récupération id
+//------------------------------- AFFICHAGE DES DETAILS DU PRODUIT -----------------------------------
+
+//Récupération de l'id du produit dans l'url : '?id=....'
 const queryUrlId = window.location.search;
 
-//extraction id
+//Extraction de l'id du produit depuis l'url, en enlevant '?id='
 const urlSearchParams = new URLSearchParams(queryUrlId);
-
 const id = urlSearchParams.get("id");
 console.log('id =', id);
 
 //Affichage du produit
-
 function afficherProduit() {
     fetch("http://localhost:3000/api/products/" + id)
-        .then(function(response) {
+        .then(function (response) {
             if (response.ok) {
                 return response.json();
             }
         })
-        .then(function(Product) {
+        .then(function (Product) {
 
             //Photo du produit
-            let divProductImg = document.getElementsByClassName("item__img");
             let productImg = document.createElement("img");
             productImg.src = Product.imageUrl;
             productImg.alt = Product.altTxt;
@@ -45,77 +44,93 @@ function afficherProduit() {
                 optionValue.text = color;
                 colorChoice.options.add(optionValue);
             }
-            
+
         })
 }
 
 afficherProduit();
 
 
-// Récupération des données et envoi au panier
+//--------------------------------------- AJOUT AU PANIER --------------------------------------------
+//-------Récupération des données et envoi au panier au click sur le bouton 'Ajouter au panier'-------
 
-const btn_send = document.querySelector("#addToCart");
+const addToCartBtn = document.querySelector("#addToCart");
 
-btn_send.addEventListener("click", (event) =>{
+addToCartBtn.addEventListener("click", (event) => {
     event.preventDefault();
+
+    //Récupération de la couleur et de la quantité choisies
     const colorChoice = document.querySelector("#colors").value;
     const quantityChoice = document.querySelector("#quantity").value;
+    //Construction de l'objet qui sera envoyé dans le localStorage
     let productData = {
         _id: id,
-        localStorageId : id + colorChoice,
+        localStorageId: id + colorChoice,
         quantity: quantityChoice,
         color: colorChoice
     }
-    console.log(productData);
+    console.log("productData", productData);
 
+    //Vérification que la quantité et la couleur sont bien renseignées
     if (quantityChoice != 0 && colorChoice != '') {
-        //Local storage
-    let recProduct = JSON.parse(localStorage.getItem("produit"));
 
-    //Popup
-    const popupConfirmation = () => {
-        if (window.confirm(`${id} option: ${colorChoice} a bien été ajouté au panier.
+        //Envoi des données du produit dans le localStorage
+        let recProduct = JSON.parse(localStorage.getItem("produit"));
+
+        //Popup de confirmation d'ajout du produit au panier
+        const popupConfirmation = () => {
+            if (window.confirm(`${id} option: ${colorChoice} a bien été ajouté au panier.
         Consulter le panier OK ou continuer les achats ANNULER`)) {
-            window.location.href = "cart.html";
-        } else {
-            window.location.href = "index.html";
-        }
-    }
-
-    let localStorageId = id + colorChoice;
-    //fonction ajouter produits
-    const ajoutPdt = (localStorageId, quantityChoice) => {
-        let quantityCheck = false;
-        for (let i = 0; i < recProduct.length; i++) {
-            if (localStorageId == recProduct[i].localStorageId) {
-                console.log("recProduct[i]", recProduct[i]);
-                console.log("if ?");
-                let quantity = parseInt(recProduct[i].quantity);
-                quantity += parseInt(quantityChoice);
-                recProduct[i].quantity = quantity;
-                console.log("quantity", quantity);
-                quantityCheck = true;
+                window.location.href = "cart.html";
+            } else {
+                window.location.href = "index.html";
             }
         }
-        if (!quantityCheck) {
-            recProduct.push(productData);
-        }
-        localStorage.setItem("produit", JSON.stringify(recProduct));
-    };
 
-    //s'il y a déjà des produits
-    if (recProduct) {
-        ajoutPdt(localStorageId, quantityChoice);
-        popupConfirmation();
-    } else {
-        recProduct = [];
-        ajoutPdt(localStorageId, quantityChoice);
-        popupConfirmation();
+        //Définition de la clé permettant de classer les produits par id + couleur choisie
+        let localStorageId = id + colorChoice;
+
+        //Ajout des produits dans le localStorage
+        const ajoutPdt = (localStorageId, quantityChoice) => {
+            let quantityCheck = false;
+            for (let i = 0; i < recProduct.length; i++) {
+                //Si le produit a déjà été ajouté avec la même couleur
+                if (localStorageId == recProduct[i].localStorageId) {
+                    //Récupération de la quantité déjà enregistrée
+                    let quantity = parseInt(recProduct[i].quantity);
+                    //Ajout de la nouvelle quantité
+                    quantity += parseInt(quantityChoice);
+                    recProduct[i].quantity = quantity;
+                    quantityCheck = true;
+                }
+            } //Sinon, une nouvelle entrée est ajoutée pour le produit
+            if (!quantityCheck) {
+                recProduct.push(productData);
+            }
+            //Enregistrement des produits dans le localStorage
+            localStorage.setItem("produit", JSON.stringify(recProduct));
+        };
+
+        //S'il y a déjà des produits
+        if (recProduct) {
+            //Ajout des nouveaux produits
+            ajoutPdt(localStorageId, quantityChoice);
+            popupConfirmation();
+        } else {
+            //Sinon, création du tableau de produits
+            recProduct = [];
+            //Et ajout des nouveaux produits
+            ajoutPdt(localStorageId, quantityChoice);
+            popupConfirmation();
+        }
     }
-    } else if (quantityChoice == 0 && colorChoice == '') {
+    //Si la couleur et/ou la quantité ne sont pas renseignées correctement
+    else if (quantityChoice == 0 && colorChoice == '') {
         alert("Veuillez choisir une quantité et une couleur");
     } else if (quantityChoice == 0) {
         alert("Veuillez choisir une quantité");
+    } else if (quantityChoice > 100) {
+        alert("Veuillez choisir une quantité comprise entre 1 et 100");
     } else if (colorChoice == '') {
         alert("Veuillez choisir une couleur");
     }
