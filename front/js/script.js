@@ -1,16 +1,18 @@
-//------------------------------- AFFICHAGE DES PRODUITS DE LA BOUTIQUE -----------------------------------
+//---------------------------- AFFICHAGE DES PRODUITS SUR LA PAGE D'ACCUEIL ----------------------------
 
 function afficherProduits() {
     fetch("http://localhost:3000/api/products")
-        .then(function(response) {
+        //Vérification de la connexion à l'API
+        .then(function (response) {
             if (response.ok) {
-                console.log("DB ok");
                 return response.json();
             }
         })
-        .then(function(Product) {
+        //Récupération des données des fiches produits pour l'affichage
+        .then(function (Product) {
             //Récupération de la section où seront affichés les produits
             let itemSection = document.getElementById("items");
+
             for (const product of Product) {
 
                 //Photo du produit
@@ -46,7 +48,7 @@ function afficherProduits() {
                 itemSection.appendChild(productLink);
             }
         })
-        .catch(function(err) {
+        .catch(function (err) {
             console.error("Erreur");
         });
 }

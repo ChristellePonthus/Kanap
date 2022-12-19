@@ -1,39 +1,38 @@
 //------------------------------------ PANIER -----------------------------------
 //---------------------- Récupération des articles sélectionnés -----------------
 
+//Récupération des données du localStorage au format Objet
 let recProducts = JSON.parse(localStorage.getItem("produit"));
-console.log("products 1", recProducts);
 
-let deleteItem = '';
+
+//Tableau pour récupérer le prix de chaque produit afin de calculer le total du panier
+let panier = [];
+//Variable pour récupérer les emplacements de chaque input de quantité dans le panier
 let quantitySet = '';
-let cumulQtty = 0;
-let totalQuantity = 0;
-let qttyTab = [];
-let priceTab = [];
-let totalPriceProduct = 0;
-let totalPrice = 0;
-let cumulPrice = 0;
 
 //Si le panier est vide
 if (recProducts === null || recProducts == 0) {
+    //Création d'un titre indiquant que le panier est vide
     let emptyCart = document.createElement("h2");
     emptyCart.textContent = "Votre panier est vide !";
     let divCart = document.getElementById("cart__items");
     divCart.appendChild(emptyCart);
-} else {
+}
+//Si le panier contient des articles
+else {
     //Tri des articles par id
     recProducts.sort((a, b) => a._id.localeCompare(b._id));
     for (let i = 0; i < recProducts.length; i++) {
-        function afficherProduit() {
+        function displayProduct() {
             fetch("http://localhost:3000/api/products/" + recProducts[i]._id)
+                //Vérification de la connexion à l'API
                 .then(function (response) {
                     if (response.ok) {
-                        console.log("DB ok");
                         return response.json();
                     }
                 })
+                //Récupération des données de la fiche produit pour l'affichage
                 .then(function (Product) {
-                    console.log("Product ", Product);
 
                     //Récupération de la section où sera affiché le produit
                     let cartSection = document.getElementById("cart__items");
@@ -64,7 +63,6 @@ if (recProducts === null || recProducts == 0) {
                     divCartDesc.appendChild(productName);
                     divCartDesc.appendChild(colorChoice);
                     divCartDesc.appendChild(productPrice);
-
 
                     //Affichage de la quantité dans une div
                     let quantitySettingName = document.createElement("p");
@@ -112,76 +110,94 @@ if (recProducts === null || recProducts == 0) {
                     //Insertion dans la section 'cart__items'
                     cartSection.appendChild(productArticle);
 
+                    //Enregistrement de chaque produit dans le tableau "panier"
+                    panier.push(Product);
+
                     //Définition de la clé permettant de cibler la ligne du produit dans le panier
                     let localStorageId = recProducts[i]._id + recProducts[i].color;
 
                     //Récupération du lien pour la suppression
-                    deleteItem = document.getElementsByClassName("deleteItem");
+                    let deleteItem = document.getElementsByClassName("deleteItem");
                     //Suppression au click sur le lien
-                    supprimerProduit(localStorageId);
+                    deleteItem[i].addEventListener("click", (event) => {
+                        deleting(localStorageId);
+                    });
 
                     //Récupération de la quantité de l'article
                     let productQuantity = parseInt(recProducts[i].quantity);
+                    //Récupération de l'emplacement de la quantité dans le DOM
                     quantitySet = document.getElementsByClassName("itemQuantity");
-                    console.log("quantitySet", quantitySet);
-                    console.log("productQuantity", productQuantity, typeof (productQuantity));
-                    
-                    //Mise à jour de la quantit de l'article si modification par l'utilisateur
-                    updateQuantity(Product, productQuantity, localStorageId);
 
-                    //Calcul du prix total de l'article
-                    totalPriceProduct = parseInt(productQuantity) * parseInt(Product.price);
-                    
+                    //Mise à jour de la quantit de l'article si modification par l'utilisateur
+                    updateQuantity(panier, productQuantity, localStorageId);
+
                     //Affichage 
-                    afficherTotal(Product, productQuantity);
+                    displayTotal(panier);
                 })
         }
-        afficherProduit();
+        displayProduct();
     }
 }
 
+//-------------------------------- TOTAL DU PANIER ---------------------------------------
+
+//Déclaration des tableaux dans lesquels seront insérés la quantité ainsi que le prix total de chaque article
+
+function displayTotal(panier) {
+
+    //Récupération de l'emplacement du DOM où seront affichés les totaux de la quantité et du prix du panier
+    let totalQuantity = document.querySelector('#totalQuantity').closest('span');
+    let totalPrice = document.querySelector('#totalPrice').closest('span');
+
+    let cumulQtty = 0;
+    let cumulPrice = 0;
+    for (let i = 0; i < panier.length; i++) {
+        for (let j = 0; j < recProducts.length; j++) {
+            if ((recProducts[j]._id == panier[i]._id)) {
+                cumulQtty += parseInt(recProducts[j].quantity);
+                cumulPrice += (parseInt(panier[i].price) * parseInt(recProducts[j].quantity));
+            }
+        }
+    }
+
+    //Affichage de la quantité totale dans le DOM
+    totalQuantity.textContent = cumulQtty;
+
+    //Affichage du prix total dans le DOM
+    totalPrice.textContent = cumulPrice;
+}
+
+
 //Fonction de suppression du produit appelée lors du clic sur le lien "Supprimer"
 //ou quand la quantité est mise à 0
-function suppression(localStorageId) {
+function deleting(localStorageId) {
     for (let i = 0; i < recProducts.length; i++) {
         if (localStorageId == recProducts[i].localStorageId) {
             recProducts.splice(i, 1);
             localStorage.setItem("produit", JSON.stringify(recProducts));
+            //alerte produit supprimé
+            alert("produit supprimé");
+            window.location.href = "cart.html";
         }
     }
-    //alerte produit supprimé
-    alert("produit supprimé");
-    window.location.href = "cart.html";
 }
 
-//Supprimer le produit lors du click sur le lien "Supprimer"
-function supprimerProduit(localStorageId) {
-    for (let j = 0; j < deleteItem.length; j++) {
-        deleteItem[j].addEventListener("click", (event) => {
-            suppression(localStorageId);
-            event.preventDefault();
-        });
-    }
-}
-//Fin fonctions de suppression
 
 //Mis à jour de la quantité du produit dans le localStorage si modification par l'utilisateur
-function updateQuantity(Product, productQuantity, localStorageId) {
+function updateQuantity(panier, productQuantity, localStorageId) {
     for (let i = 0; i < quantitySet.length; i++) {
         quantitySet[i].addEventListener("change", function (event) {
-            event.preventDefault();
             const newQtty = event.target.value;
             //Vérification que la case ne contient que des chiffres, compris entre 1 et 100
-            if (/^[0-9\-s]{1,3}$/.test(newQtty) && (newQtty < 100) && (newQtty != 0)) {
-                console.log("if ?");
-                if (recProducts[i].quantity !== newQtty) {
+            if (/^[0-9\-s]{1,3}$/.test(newQtty) && (newQtty < 101) && (newQtty != 0)) {
+                if (productQuantity !== newQtty) {
                     recProducts[i].quantity = newQtty;
                     localStorage.setItem("produit", JSON.stringify(recProducts));
-                    afficherTotal(Product, productQuantity);
+                    // window.location.href = "cart.html";
+                    displayTotal(panier);
                 }
             } else if (newQtty == 0) { //Si la quantité est mise à 0, le produit est supprimé
-                console.log("else if ?");
-                suppression(localStorageId);
+                deleting(localStorageId);
             } else {
                 alert("Veuillez renseigner une quantité correcte comprise entre 1 et 100");
             }
@@ -189,38 +205,6 @@ function updateQuantity(Product, productQuantity, localStorageId) {
     }
 }
 
-
-//Affichage du total d'articles et du prix total du panier
-function afficherTotal(Product, productQuantity) {
-    console.log("afficherTotal");
-
-    //Récupération des span où seront affichées les informations
-    totalQuantity = document.querySelector('#totalQuantity').closest('span');
-    totalPrice = document.querySelector('#totalPrice').closest('span');
-
-
-    qttyTab.push(productQuantity);
-    priceTab.push(totalPriceProduct);
-    console.log("qttyTab[i]", qttyTab);
-
-    //Méthode .reduce permettant de faire la somme dans les tableaux
-    const reducer = (accumulator, currentValue) => accumulator + currentValue;
-    cumulQtty = qttyTab.reduce(reducer, 0);
-    console.log("cumulQtty total", cumulQtty);
-
-    cumulPrice = priceTab.reduce(reducer,0);
-    console.log("cumulPrice", cumulPrice);
-
-    console.log("qttyTab afficherTotal", qttyTab);
-    console.log("priceTab afficherTotal", priceTab);
-
-    totalQuantity.textContent = cumulQtty;
-
-    // additionner les quantités puis recalculer le prix
-
-    //Affichage de ce prix total dans le DOM
-    totalPrice.textContent = cumulPrice;
-}
 
 
 //------------------------------------ FORMULAIRE -----------------------------------
@@ -231,9 +215,8 @@ const submitBtn = document.querySelector("#order");
 
 //Au click du bouton :
 submitBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
 
-    //Récupération des valeurs entrées dans chaque champs
+    //Récupération des valeurs entrées dans chaque champ
     const contact = {
         firstName: document.querySelector("#firstName").value,
         lastName: document.querySelector("#lastName").value,
@@ -242,7 +225,23 @@ submitBtn.addEventListener("click", async (e) => {
         email: document.querySelector("#email").value
     };
 
-    //Validation du champ 'Email'
+    //Envoi de l'objet "contact" dans le localStorage pour pouvoir garder les données
+    //et ne pas tout resaisir s'il y a une erreur (fonction keepDataInForm(input) plus bas)
+    localStorage.setItem("contact", JSON.stringify(contact));
+
+    //Création du tableau contenant les id des produits
+    let products = [];
+    for (let i = 0; i < recProducts.length; i++) {
+        products.push(recProducts[i]._id);
+    }
+
+    //Objet contenant les données du formulaire et les produits sélectionnés
+    const commande = {
+        contact,
+        products
+    }
+
+    //Fonction de validation du champ 'Email'
     function emailCtrl() {
         email = contact.email.toString();
         if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
@@ -250,7 +249,7 @@ submitBtn.addEventListener("click", async (e) => {
         }
     };
 
-    //Validation du champ 'Adresse'
+    //Fonction de validation du champ 'Adresse'
     function addressCtrl() {
         address = contact.address.toString();
         if (/^[A-Za-zÀ-ÖØ-öø-ÿ0-9 '-]{5,50}$/.test(address)) {
@@ -258,45 +257,27 @@ submitBtn.addEventListener("click", async (e) => {
         }
     };
 
-    //fonction de validation pour les champs 'Prénom', 'Nom', 'Ville'
+    //Fonction de validation pour les champs 'Prénom', 'Nom', 'Ville'
     function ctrlNames(name) {
-        if (/^[A-Za-zÀ-ÖØ-öø-ÿ'-]{3,20}$/.test(name)) {
+        if (/^[A-Za-zÀ-ÖØ-öø-ÿ '-]{3,20}$/.test(name)) {
             return true;
         }
     }
-    //Récupération de la donnée du champ 'Prénom' pour validation
+    //Récupération de la donnée du champ 'Prénom' au format String pour validation
     firstName = contact.firstName.toString();
 
-    //Récupération de la donnée du champ 'Nom' pour validation
+    //Récupération de la donnée du champ 'Nom' au format String pour validation
     lastName = contact.lastName.toString();
 
-    //Récupération de la donnée du champ 'Ville' pour validation
+    //Récupération de la donnée du champ 'Ville' au format String pour validation
     city = contact.city.toString();
 
     //Contrôle avant envoi des données dans le localStorage
     if (ctrlNames(firstName) && ctrlNames(lastName) && ctrlNames(city) && emailCtrl() && addressCtrl()) {
 
-        //Si tout est ok, envoi de l'objet "contact" dans le localStorage
-        localStorage.setItem("contact", JSON.stringify(contact));
-
-        //Création du tableau contenant les id des produits
-        let products = [];
-        for (let i = 0; i < recProducts.length; i++) {
-            products.push(recProducts[i]._id);
-        }
-        console.log("productsId", products);
-
-        //Objet contenant les données du formulaire et les produits sélectionnés
-        const commande = {
-            contact,
-            products
-        }
-        console.log("commande", typeof (commande), commande);
-
-        //Envoi de l'objet 'commande' vers le serveur
-
-        //Vérification de requête à l'API
-        const promise = fetch("http://localhost:3000/api/products/order", {
+        //Si tout est ok, envoi de l'objet 'commande' vers le serveur
+        //Requête à l'API
+        const requestAPI = fetch("http://localhost:3000/api/products/order", {
             method: "POST",
             body: JSON.stringify(commande),
             headers: {
@@ -304,24 +285,24 @@ submitBtn.addEventListener("click", async (e) => {
             },
         });
 
-        console.log("promise", promise);
-
-        promise.then(async (response) => {
+        //Récupération de la réponse de l'API
+        requestAPI.then(async (response) => {
             try {
-                const contenu = await response.json();
-                console.log("contenu =", contenu);
+                const content = await response.json();
                 if (response.ok) {
-                    console.log("resultat de responde.ok = " + response.ok);
-                    console.log("contenu.orderId", contenu.orderId);
+                    //Suppression des données du localStorage
+                    localStorage.clear();
                 } else {
-                    
+                    console.log("erreur");
                 }
-                window.location.href = "confirmation.html?orderId=" + contenu.orderId;
+                //Redirection vers la page de confirmation
+                window.location.href = "confirmation.html?orderId=" + content.orderId;
             } catch (e) {
                 console.log(e);
             }
         })
     } else {
+        //Si le formulaire n'est pas rempli correctement, des messages d'erreur s'affichent sous les champs concernés
         alert("Veuillez remplir correctement le fomulaire !");
         if (!ctrlNames(firstName)) {
             let firstNameErrorMsg = document.querySelector('#firstNameErrorMsg');
@@ -345,6 +326,29 @@ submitBtn.addEventListener("click", async (e) => {
         }
     }
 
+    e.preventDefault();
 
 });
 
+
+//------------------- Maintien des données de saisie dans le formulaire ------------------
+
+//Récupération des données de saisie du formulaire dans le localStorage
+const formValues = localStorage.getItem("contact");
+
+//Conversion en objet javascript
+const formValuesObjet = JSON.parse(formValues);
+
+//Fonction remplissant les champs du formulaire par les données du localStorage, si existantes
+function keepDataInForm(input) {
+    if (formValuesObjet != null) {
+        document.querySelector(`#${input}`).value = formValuesObjet[input];
+    }
+}
+
+//Appel des fonctions
+keepDataInForm("firstName");
+keepDataInForm("lastName");
+keepDataInForm("address");
+keepDataInForm("city");
+keepDataInForm("email");
