@@ -81,13 +81,13 @@ addToCartBtn.addEventListener("click", (event) => {
     }
 
     //Vérification que la quantité et la couleur sont correctement renseignées
-    if (quantityChoice < 101 && quantityChoice != 0 && colorChoice != '') {
+    if (/^[0-9\-s]{1,3}$/.test(quantityChoice) && quantityChoice < 101 && quantityChoice != 0 && colorChoice != '') {
 
         //Envoi des données du produit dans le localStorage si ok
         let recProduct = JSON.parse(localStorage.getItem("produit"));
 
         //Popup de confirmation d'ajout du produit au panier
-        const popupConfirmation = () => {
+        const confirmAddToCart = () => {
             if (window.confirm(`Le produit ${prodName} option: ${colorChoice} a bien été ajouté au panier.\nConsulter le panier OK ou continuer les achats ANNULER`)) {
                 window.location.href = "cart.html";
             } else {
@@ -96,7 +96,7 @@ addToCartBtn.addEventListener("click", (event) => {
         }
 
         //Ajout des produits dans le localStorage
-        const ajoutPdt = (localStorageId, quantityChoice) => {
+        const addToCart = (localStorageId, quantityChoice) => {
             let quantityCheck = false;
             for (let i = 0; i < recProduct.length; i++) {
                 //Si le produit a déjà été ajouté avec la même couleur
@@ -119,14 +119,14 @@ addToCartBtn.addEventListener("click", (event) => {
         //S'il y a déjà des produits
         if (recProduct) {
             //Ajout des nouveaux produits
-            ajoutPdt(localStorageId, quantityChoice);
-            popupConfirmation();
+            addToCart(localStorageId, quantityChoice);
+            confirmAddToCart();
         } else {
             //Sinon, création du tableau de produits
             recProduct = [];
             //Et ajout des nouveaux produits
-            ajoutPdt(localStorageId, quantityChoice);
-            popupConfirmation();
+            addToCart(localStorageId, quantityChoice);
+            confirmAddToCart();
         }
     }
     //Si la couleur et/ou la quantité ne sont pas renseignées correctement
@@ -134,7 +134,7 @@ addToCartBtn.addEventListener("click", (event) => {
         alert("Veuillez choisir une quantité et une couleur");
     } else if (quantityChoice == 0) {
         alert("Veuillez choisir une quantité");
-    } else if (quantityChoice > 100) {
+    } else if (quantityChoice > 100 || !(/^[0-9\-s]{1,3}$/.test(quantityChoice))) {
         alert("Veuillez choisir une quantité comprise entre 1 et 100");
     } else if (colorChoice == '') {
         alert("Veuillez choisir une couleur");

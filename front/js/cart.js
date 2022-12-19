@@ -21,7 +21,6 @@ if (recProducts === null || recProducts == 0) {
 //Si le panier contient des articles
 else {
     //Tri des articles par id
-    recProducts.sort((a, b) => a._id.localeCompare(b._id));
     for (let i = 0; i < recProducts.length; i++) {
         function displayProduct() {
             fetch("http://localhost:3000/api/products/" + recProducts[i]._id)
@@ -149,6 +148,7 @@ function displayTotal(panier) {
     let totalQuantity = document.querySelector('#totalQuantity').closest('span');
     let totalPrice = document.querySelector('#totalPrice').closest('span');
 
+    //Calcul des totaux à afficher
     let cumulQtty = 0;
     let cumulPrice = 0;
     for (let i = 0; i < panier.length; i++) {
@@ -199,7 +199,7 @@ function updateQuantity(panier, productQuantity, localStorageId) {
             } else if (newQtty == 0) { //Si la quantité est mise à 0, le produit est supprimé
                 deleting(localStorageId);
             } else {
-                alert("Veuillez renseigner une quantité correcte comprise entre 1 et 100");
+                alert("Veuillez renseigner une quantité correcte compris entre 1 et 100");
             }
         });
     }
@@ -230,9 +230,14 @@ submitBtn.addEventListener("click", async (e) => {
     localStorage.setItem("contact", JSON.stringify(contact));
 
     //Création du tableau contenant les id des produits
+    let emptyList = false;
     let products = [];
-    for (let i = 0; i < recProducts.length; i++) {
-        products.push(recProducts[i]._id);
+    if (recProducts === null || recProducts == 0) {
+        emptyList = true;
+    } else {
+        for (let i = 0; i < recProducts.length; i++) {
+            products.push(recProducts[i]._id);
+        }
     }
 
     //Objet contenant les données du formulaire et les produits sélectionnés
@@ -273,7 +278,7 @@ submitBtn.addEventListener("click", async (e) => {
     city = contact.city.toString();
 
     //Contrôle avant envoi des données dans le localStorage
-    if (ctrlNames(firstName) && ctrlNames(lastName) && ctrlNames(city) && emailCtrl() && addressCtrl()) {
+    if (ctrlNames(firstName) && ctrlNames(lastName) && ctrlNames(city) && emailCtrl() && addressCtrl() && !emptyList) {
 
         //Si tout est ok, envoi de l'objet 'commande' vers le serveur
         //Requête à l'API
@@ -302,8 +307,11 @@ submitBtn.addEventListener("click", async (e) => {
             }
         })
     } else {
+        if (emptyList) {
+            alert("Votre panier est vide ! \nVous serez redirigé(e) vers la boutique afin de choisir un article");
+            window.location.href = "index.html";
+        }
         //Si le formulaire n'est pas rempli correctement, des messages d'erreur s'affichent sous les champs concernés
-        alert("Veuillez remplir correctement le fomulaire !");
         if (!ctrlNames(firstName)) {
             let firstNameErrorMsg = document.querySelector('#firstNameErrorMsg');
             firstNameErrorMsg.textContent = "Merci de remplir ce champ correctement";
