@@ -121,16 +121,26 @@ else {
                     deleteItem[i].addEventListener("click", (event) => {
                         deleting(localStorageId);
                     });
-
-                    //Récupération de la quantité de l'article
-                    let productQuantity = parseInt(recProducts[i].quantity);
+                    
                     //Récupération de l'emplacement de la quantité dans le DOM
                     quantitySet = document.getElementsByClassName("itemQuantity");
-
+                    
                     //Mise à jour de la quantit de l'article si modification par l'utilisateur
-                    updateQuantity(panier, productQuantity, localStorageId);
+                    quantitySet[i].addEventListener("change", function (event) {
+                        const newQtty = event.target.value;
+                        //Vérification que la case ne contient que des chiffres, compris entre 1 et 100
+                        if (/^[0-9\-s]{1,3}$/.test(newQtty) && (newQtty < 101) && (newQtty != 0)) {
+                            if (recProducts[i].quantity !== newQtty) {
+                                recProducts[i].quantity = newQtty;
+                                localStorage.setItem("produit", JSON.stringify(recProducts));
+                                displayTotal(panier);
+                            }
+                        } else {
+                            alert("Veuillez renseigner une quantité correcte compris entre 1 et 100");
+                        }
+                    });
 
-                    //Affichage 
+                    //Affichage des totaux
                     displayTotal(panier);
                 })
         }
@@ -139,8 +149,6 @@ else {
 }
 
 //-------------------------------- TOTAL DU PANIER ---------------------------------------
-
-//Déclaration des tableaux dans lesquels seront insérés la quantité ainsi que le prix total de chaque article
 
 function displayTotal(panier) {
 
@@ -169,7 +177,6 @@ function displayTotal(panier) {
 
 
 //Fonction de suppression du produit appelée lors du clic sur le lien "Supprimer"
-//ou quand la quantité est mise à 0
 function deleting(localStorageId) {
     for (let i = 0; i < recProducts.length; i++) {
         if (localStorageId == recProducts[i].localStorageId) {
@@ -182,28 +189,6 @@ function deleting(localStorageId) {
     }
 }
 
-
-//Mis à jour de la quantité du produit dans le localStorage si modification par l'utilisateur
-function updateQuantity(panier, productQuantity, localStorageId) {
-    for (let i = 0; i < quantitySet.length; i++) {
-        quantitySet[i].addEventListener("change", function (event) {
-            const newQtty = event.target.value;
-            //Vérification que la case ne contient que des chiffres, compris entre 1 et 100
-            if (/^[0-9\-s]{1,3}$/.test(newQtty) && (newQtty < 101) && (newQtty != 0)) {
-                if (productQuantity !== newQtty) {
-                    recProducts[i].quantity = newQtty;
-                    localStorage.setItem("produit", JSON.stringify(recProducts));
-                    // window.location.href = "cart.html";
-                    displayTotal(panier);
-                }
-            } else if (newQtty == 0) { //Si la quantité est mise à 0, le produit est supprimé
-                deleting(localStorageId);
-            } else {
-                alert("Veuillez renseigner une quantité correcte compris entre 1 et 100");
-            }
-        });
-    }
-}
 
 
 
@@ -229,7 +214,7 @@ submitBtn.addEventListener("click", async (e) => {
     //et ne pas tout resaisir s'il y a une erreur (fonction keepDataInForm(input) plus bas)
     localStorage.setItem("contact", JSON.stringify(contact));
 
-    //Création du tableau contenant les id des produits
+    //Création du tableau contenant les id des produits pour envoi au back
     let emptyList = false;
     let products = [];
     if (recProducts === null || recProducts == 0) {
